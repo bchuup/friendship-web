@@ -1,32 +1,36 @@
 <template>
-  <svg xmlns="http://www.w3.org/2000/svg"
-    :width="width+'px'"
-    :height="height+'px'"
-    @mousemove="drag($event)"
-    @mouseup="drop()"
-    v-if="bounds.minX">
+  <div class="">
+    <!-- {{this.graph.nodes.length}} -->
+    <!-- style="max-width: 200px;" -->
+    <svg xmlns="http://www.w3.org/2000/svg"
+      :width="width+'px'"
+      :height="height+'px'"
+      @mousemove="drag($event)"
+      @mouseup="drop()"
+      v-if="bounds.minX">
 
-    <line
-      v-for="(link, index) in graph.links"
-      :key="`line-${index}`"
-      :x1="coords[link.source.index].x"
-      :y1="coords[link.source.index].y"
-      :x2="coords[link.target.index].x"
-      :y2="coords[link.target.index].y"
-      stroke="black"
-      stroke-width="2"/>
+      <line
+        v-for="(link, index) in graph.links"
+        :key="`line-${index}`"
+        :x1="coords[link.source.index].x"
+        :y1="coords[link.source.index].y"
+        :x2="coords[link.target.index].x"
+        :y2="coords[link.target.index].y"
+        stroke="black"
+        stroke-width="2"/>
 
-    <circle
-      v-for="(node, i) in graph.nodes"
-      :key="`nodes-${i}`"
-      :cx="coords[i].x"
-      :cy="coords[i].y"
-      :r="20"
-      :fill="colors[Math.ceil(Math.sqrt(node.index))]"
-      stroke="white"
-      stroke-width="1"
-      @mousedown="currentMove = {x: $event.screenX, y: $event.screenY, node: node}"/>
-  </svg>
+      <circle
+        v-for="(node, i) in graph.nodes"
+        :key="`nodes-${i}`"
+        :cx="coords[i].x"
+        :cy="coords[i].y"
+        :r="20"
+        :fill="colors[Math.ceil(Math.sqrt(node.index))]"
+        stroke="white"
+        stroke-width="1"
+        @mousedown="currentMove = {x: $event.screenX, y: $event.screenY, node: node}"/>
+    </svg>
+  </div>
 </template>
 
 <script>
@@ -41,6 +45,8 @@ export default {
       },
       width: Math.max(document.documentElement.clientWidth, window.innerWidth || 0),
       height: Math.max(document.documentElement.clientHeight, window.innerHeight || 0) - 40,
+      // width: 80,
+      // height: 80,
       padding: 20,
       colors: ['#2196F3', '#E91E63', '#7E57C2', '#009688', '#00BCD4', '#EF6C00', '#4CAF50', '#FF9800', '#F44336', '#CDDC39', '#9C27B0'],
       simulation: null,
@@ -62,9 +68,11 @@ export default {
       const nodes = this.graph.nodes.map((node) => {
         const xNumerator = (node.x - this.bounds.minX) * (this.width - (2 * this.padding));
         const yNumerator = (node.y - this.bounds.minY) * (this.height - (2 * this.padding));
+        const x = this.padding + (xNumerator / xDenom);
+        const y = this.padding + (yNumerator / yDenom);
         return {
-          x: this.padding + (xNumerator / xDenom),
-          y: this.padding + (yNumerator / yDenom),
+          x,
+          y,
         };
       });
       return nodes;
@@ -72,7 +80,7 @@ export default {
   },
   created() {
     this.simulation = d3.forceSimulation(this.graph.nodes)
-      .force('charge', d3.forceManyBody().strength(() => -100))
+      .force('charge', d3.forceManyBody().strength(() => -100).distanceMax(100))
       .force('link', d3.forceLink(this.graph.links))
       .force('x', d3.forceX())
       .force('y', d3.forceY());
@@ -101,6 +109,7 @@ export default {
     },
   },
   mounted() {
+
   },
 };
 </script>

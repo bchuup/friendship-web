@@ -1,11 +1,14 @@
 <template>
   <div class="">
-    <svg :width="width" :height="height"></svg>
+    <svg :width="width" :height="height" style="border: 1px green solid"></svg>
   </div>
 </template>
 
 <script>
 import * as d3 from 'd3';
+import friendCategoryNodes from '../data/friendCategoryNodes';
+import friendCategory from '../data/friendNodes';
+import friendLinks from '../data/friendLinks';
 
 export default {
   data() {
@@ -13,32 +16,13 @@ export default {
       svg: null,
       node: null,
       label: null,
-      nodes_data: [
-        { id: 'house', name: 'House', type: 'core' },
-        { id: 'chestnut', name: 'Chestnut', type: 'core' },
-        { id: 'mph', name: 'MPH', type: 'core' },
-        { id: 'business', name: 'Business School', type: 'core' },
-        { id: 'soccer', name: 'Soccer', type: 'core' },
-        { id: 'softball', name: 'Softball', type: 'core' },
-        { id: 'ben_chu', name: 'Ben', type: 'person' },
-        { id: 'leaticia_kaggwa', name: 'Teesha', type: 'person' },
-        { id: 'lisa_snider', name: 'Lisa', type: 'person' },
-        { id: 'pranai_vasudev', name: 'Pranai', type: 'person' },
-        { id: 'grayson_ingraham', name: 'Grayson', type: 'person' },
-        { id: 'rivka_kushner', name: 'Rivka', type: 'person' },
-      ],
-      links_data: [
-        { source: 'chestnut', target: 'ben_chu' },
-        { source: 'chestnut', target: 'leaticia_kaggwa' },
-        { source: 'chestnut', target: 'lisa_snider' },
-        { source: 'chestnut', target: 'pranai_vasudev' },
-        { source: 'pranai_vasudev', target: 'grayson_ingraham' },
-        { source: 'mph', target: 'rivka_kushner' },
-        { source: 'ben_chu', target: 'rivka_kushner' },
-        { source: 'rivka_kushner', target: 'grayson_ingraham' },
-      ],
-      width: 960,
-      height: 600,
+      nodes_data: [],
+      links_data: [],
+      radius: 7,
+      width: 700,
+      height: 500,
+      // width: Math.max(document.documentElement.clientWidth, window.innerWidth || 0),
+      // height: Math.max(document.documentElement.clientHeight, window.innerHeight || 0),
       simulation: null,
     };
   },
@@ -47,13 +31,13 @@ export default {
   methods: {
     drawNode() {
       return this.node
-        .attr('cx', n => n.x)
-        .attr('cy', n => n.y);
+        .attr('cx', n => Math.max(20, Math.min(this.width - 20, n.x)))
+        .attr('cy', n => Math.max(20, Math.min(this.height - 40, n.y)));
     },
     drawLabels() {
       return this.label
-        .attr('x', n => n.x - 10)
-        .attr('y', n => n.y + 20);
+        .attr('x', n => Math.max(20, Math.min(this.width - 20, n.x) + 10))
+        .attr('y', n => Math.max(20, Math.min(this.height - 20, n.y) - 10));
     },
     drawLink() {
       return this.link
@@ -69,15 +53,22 @@ export default {
     },
   },
   mounted() {
+    this.nodes_data = [
+      ...friendCategory.data,
+      ...friendCategoryNodes.data,
+    ];
+    this.links_data = [
+      ...friendLinks.data,
+    ];
     this.svg = d3.select('svg');
     this.simulation = d3.forceSimulation()
       .nodes(this.nodes_data);
-    this.link_force = d3.forceLink(this.links_data)
-      .id(d => d.id);
+    // this.link_force = d3.forceLink(this.links_data)
+    //   .id(d => d.id);
     this.simulation
-      .force('charge_force', d3.forceManyBody().strength(() => -200).distanceMax(200))
+      .force('charge_force', d3.forceManyBody().strength(() => -300).distanceMax(200))
       .force('center_force', d3.forceCenter(this.width / 2, this.height / 2))
-      .force('links', this.link_force);
+      .force('links', d3.forceLink(this.links_data).id(d => d.id));
 
     this.node = this.svg.append('g')
       .attr('class', 'nodes')
@@ -85,7 +76,7 @@ export default {
       .data(this.nodes_data)
       .enter()
       .append('circle')
-      .attr('r', n => (n.type === 'core' ? 7 : 5))
+      .attr('r', n => (n.type === 'core' ? this.radius : this.radius - 2))
       .attr('fill', n => (n.type === 'core' ? 'blue' : 'red'));
 
     this.label = this.svg.append('g')
